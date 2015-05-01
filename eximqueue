@@ -1,0 +1,30 @@
+#!/usr/bin/python
+eximqueue_default_levels = (100, 200)
+ 
+def inventory_eximqueue(info):
+    if len(info) > 0 and info[0] != '':
+        return [(None, 'eximqueue_default_levels')]
+ 
+def check_eximqueue(item, params, info):
+    for line in info:
+        if line[0] == '0':
+            return (0, 'OK - The mailqueue is empty ', [ ('length', 0, params[0], params[1]),
+                                                         ('size', '0') ])
+        else:
+            len     = int(line[0])
+ 
+            perfdata = [ ('length', len, params[0], params[1])]
+ 
+            if len > params[1]:
+                return (2, 'CRIT - Mailqueue length is %d '
+                           '(More than threshold: %d)' % (len, params[0]), perfdata)
+            elif len > params[0]:
+                return (1, 'WARN - Mailqueue length is %d '
+                           '(More than threshold: %d)' % (len, params[0]), perfdata)
+            else:
+                return (0, 'OK - Mailqueue length is %d ' % len, perfdata)
+ 
+    return (3, 'UNKNOWN - Could not find summarizing line in output')
+ 
+check_info['eximqueue'] = (check_eximqueue, "Exim Queue", 1, inventory_eximqueue)
+checkgroup_of["eximqueue"] = "mailqueue_length"
